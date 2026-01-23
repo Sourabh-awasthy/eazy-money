@@ -1,17 +1,30 @@
-import express from 'express'
 import dotenv from 'dotenv'
+import express from 'express'
 import http from 'http'
 import cors from 'cors'
+import { initTwelveDataSocket } from './socket/twelveData'
+import { Server } from 'socket.io';
 
 dotenv.config();
 
 const app = express();
 const server = http.createServer(app);
 const PORT = process.env.PORT || 8080;
+const FRONTEND = process.env.FRONTEND
+
 
 app.use(cors());
 app.use(express.json());
 
+
+const io = new Server(server, {
+    cors: {
+        origin: FRONTEND,
+        methods: ["GET", "POST"]
+    }
+})
+
+initTwelveDataSocket(io);
 
 server.listen(PORT, () =>{
     console.log(`Server running at ${PORT}`);
