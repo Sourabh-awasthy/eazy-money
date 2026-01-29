@@ -24,7 +24,7 @@ export const initTwelveDataSocket = (io : Server) => {
         const message = JSON.parse(data);
 
         if(message.event === 'price'){
-            console.log(`Live Data >> ${message.symbol} : ${message.price}`)
+            // console.log(`Live Data >> ${message.symbol} : ${message.price}`)
             io.emit('price-update', {
                 symbol: message.symbol,
                 price: message.price
@@ -36,6 +36,6 @@ export const initTwelveDataSocket = (io : Server) => {
 
     ws.on('close', () => {
         console.error("Connection band hogya, retrying");
-        setTimeout(initTwelveDataSocket, 6000);
+        setTimeout(() => initTwelveDataSocket(io), 6000);
     });
 };

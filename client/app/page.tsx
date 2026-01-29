@@ -1,41 +1,43 @@
-"use client";
+"use client"
 import { useEffect, useState } from "react";
+import { StockCard, StockCardProps } from "./components/stockCard";
 import { socket } from "./lib/socket";
 
-interface StockPrice {
-  symbol: string;
-  price: string;
-}
 
-export default function Dashboard() {
-  const [prices, setPrices] = useState<{ [key: string]: string }>({});
+export default function Home() {
+
+  const [stockList, setStockList] = useState<{ [key: string]: StockCardProps }>({});
 
   useEffect(() => {
-    // 1. Listen for the 'price-update' event we defined in the backend
-    socket.on("price-update", (data: StockPrice) => {
-      setPrices((prev) => ({
-        ...prev,
-        [data.symbol]: data.price,
-      }));
-    });
 
-    // 2. Cleanup on unmount
-    return () => {
-      socket.off("price-update");
+    const handlePriceUpdate = (data: StockCardProps) => {
+      setStockList((prev) => ({
+        ...prev,
+        [data.symbol]: { ...prev[data.symbol], ...data }
+      }));
     };
+
+    socket.on("price-update", handlePriceUpdate);
+
+    return () => {
+      socket.off("price-update", handlePriceUpdate);
+    }
   }, []);
 
   return (
-    <div className="p-8">
-      <h1 className="text-2xl font-bold mb-6">Live Market Data</h1>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {Object.entries(prices).map(([symbol, price]) => (
-          <div key={symbol} className="p-4 border rounded-lg shadow-sm bg-white">
-            <h2 className="text-gray-500 font-medium">{symbol}</h2>
-            <p className="text-xl font-mono font-bold">${parseFloat(price).toFixed(2)}</p>
-          </div>
-        ))}
-      </div>
+    <div className="flex flex-col justify-center bg-red-50 font-sans dark:bg-black">
+      <h1 className="text-4xl text-center">
+        Welcome to Eazy Trading
+      </h1>
+      {
+        Object.values(stockList).map((stock) => (
+          <StockCard 
+            key = {stock.symbol}
+            symbol = {stock.symbol}
+            price = {stock.price}
+          />
+        ))
+      }
     </div>
   );
 }
