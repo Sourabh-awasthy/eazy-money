@@ -1,4 +1,7 @@
 import dotenv from 'dotenv'
+dotenv.config();
+
+
 import express from 'express'
 import http from 'http'
 import cors from 'cors'
@@ -6,8 +9,6 @@ import { initTwelveDataSocket } from './socket/twelveData'
 import { Server } from 'socket.io';
 import authRoutes from './routes/authRoutes'
 import connectDB from './config/db'
-
-dotenv.config();
 
 connectDB();
 

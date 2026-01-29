@@ -3,12 +3,16 @@ import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import User from '../models/User'
 
-const JWT_SECRET = process.env.JWT_SECRET!;
+
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+    throw new Error('FATAL ERROR: JWT_SECRET is not defined in environment variables');
+}
 
 export const register = async (req: Request, res: Response) => {
     try{
         const { email, password } = req.body;
-
+    
         const existingUser = await User.findOne({ email });
         if(existingUser){
             res.status(400).json({ message: "User already exists !"});
@@ -50,6 +54,7 @@ export const login = async (req: Request, res: Response) => {
         res.status(200).json({token, user: {email: existingUser.email, walletBalance: existingUser.walletBalance}});
     }
     catch (error) {
+        console.log(error);
         res.status(500).json({message: "Server error",error});
     }
 };
