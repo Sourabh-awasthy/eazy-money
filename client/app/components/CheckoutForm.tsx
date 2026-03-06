@@ -5,12 +5,17 @@ import { useStripe, useElements, CardElement } from "@stripe/react-stripe-js";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
 
-export default function CheckoutForm() {
+// 1. Define the props to accept the refresh function
+interface CheckoutFormProps {
+    onPaymentSuccess: () => void;
+}
+
+export default function CheckoutForm({ onPaymentSuccess }: CheckoutFormProps) {
     const stripe = useStripe();
     const elements = useElements();
     const { isLoggedIn } = useAuth();
     
-    const [amount, setAmount] = useState(50); // Default to adding $50
+    const [amount, setAmount] = useState(50); 
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState("");
 
@@ -23,20 +28,30 @@ export default function CheckoutForm() {
 
         try {
             const token = localStorage.getItem("eazyToken");
-            const amountInCents = amount * 100;
+            const amountInPaise = amount * 100; // INR is calculated in paise
 
-            // 1. Ask backend for the Client Secret
             const intentRes = await axios.post(
                 "http://localhost:8080/api/payment/create-intent",
-                { amount: amountInCents },
+                { amount: amountInPaise },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
             const { clientSecret } = intentRes.data;
 
-            // 2. Confirm the card payment securely via Stripe.js
             const cardElement = elements.getElement(CardElement);
             const paymentResult = await stripe.confirmCardPayment(clientSecret, {
-                payment_method: { card: cardElement! },
+                payment_method: { 
+                    card: cardElement!,
+                    billing_details: {
+                        name: "Test User",
+                        address: {
+                            line1: "123 Test Street",
+                            city: "Mumbai",
+                            state: "MH",
+                            postal_code: "400001",
+                            country: "IN",
+                        }
+                    }
+                },
             });
 
             if (paymentResult.error) {
@@ -45,19 +60,21 @@ export default function CheckoutForm() {
                 return;
             }
 
-            // 3. If successful, tell our backend to update the MongoDB wallet balance
             if (paymentResult.paymentIntent.status === "succeeded") {
                 await axios.post(
                     "http://localhost:8080/api/payment/update-wallet",
                     { 
                         paymentIntentId: paymentResult.paymentIntent.id,
-                        amount: amountInCents
+                        amount: amountInPaise
                     },
                     { headers: { Authorization: `Bearer ${token}` } }
                 );
                 
                 setMessage("Success! Wallet funded.");
-                // Optional: trigger a profile refetch here to update the UI
+                setAmount(50); // Reset the input field
+                
+                // 2. Call the refresh function from the parent!
+                onPaymentSuccess(); 
             }
         } catch (error) {
             console.error(error);
@@ -68,31 +85,42 @@ export default function CheckoutForm() {
     };
 
     return (
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4 w-80 p-4 border rounded shadow">
-            <h2 className="text-xl font-bold">Add Funds to Wallet</h2>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4 w-full p-6 border border-gray-200 rounded-lg shadow-sm bg-gray-50">
+            <h2 className="text-xl font-bold text-gray-800">Add Funds</h2>
             
-            <label>Amount ($)</label>
+            <label className="text-sm font-semibold text-gray-700">Amount</label>
             <input 
                 type="number" 
                 value={amount} 
                 onChange={(e) => setAmount(Number(e.target.value))}
-                className="border p-2 rounded"
+                className="border border-gray-300 p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700"
                 min="1"
             />
 
-            <div className="p-3 border rounded bg-white">
+            {/* 3. The Test Card Details Box */}
+            <div className="bg-blue-50 p-3 rounded text-sm text-blue-800 border border-blue-200">
+                <p className="font-semibold mb-1">Use this Test Card:</p>
+                <p><strong>Number:</strong> 4000 0035 6000 0008</p>
+                <p><strong>Expiry:</strong> 12/30 &nbsp; | &nbsp; <strong>CVV:</strong> 123</p>
+            </div>
+
+            <div className="p-3 border border-gray-300 rounded bg-white">
                 <CardElement options={{ hidePostalCode: true }} />
             </div>
 
             <button 
                 type="submit" 
                 disabled={!stripe || loading}
-                className="bg-blue-600 text-white p-2 rounded disabled:opacity-50"
+                className="bg-blue-600 text-white font-bold p-3 rounded hover:bg-blue-700 disabled:opacity-50 transition-colors"
             >
                 {loading ? "Processing..." : `Pay $${amount}`}
             </button>
             
-            {message && <p className="text-center font-bold text-sm mt-2">{message}</p>}
+            {message && (
+                <p className={`text-center font-bold text-sm mt-2 ${message.includes('Success') ? 'text-green-600' : 'text-red-500'}`}>
+                    {message}
+                </p>
+            )}
         </form>
     );
 }
