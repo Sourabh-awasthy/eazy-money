@@ -9,6 +9,8 @@ import { initTwelveDataSocket } from './socket/twelveData'
 import { Server } from 'socket.io';
 import authRoutes from './routes/authRoutes'
 import connectDB from './config/db'
+import userRoutes from './routes/userRoutes';
+import paymentRoutes from './routes/paymentRoutes';
 
 connectDB();
 
@@ -22,6 +24,8 @@ app.use(cors());
 app.use(express.json());
 
 app.use('/api/auth',authRoutes);
+app.use('/api/user',userRoutes);
+app.use("/api/payment", paymentRoutes);
 
 
 const io = new Server(server, {
