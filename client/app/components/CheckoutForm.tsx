@@ -5,7 +5,6 @@ import { useStripe, useElements, CardElement } from "@stripe/react-stripe-js";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
 
-// 1. Define the props to accept the refresh function
 interface CheckoutFormProps {
     onPaymentSuccess: () => void;
 }
@@ -28,10 +27,15 @@ export default function CheckoutForm({ onPaymentSuccess }: CheckoutFormProps) {
 
         try {
             const token = localStorage.getItem("eazyToken");
-            const amountInPaise = amount * 100; // INR is calculated in paise
+            if(amount <= 0 || amount > 50000) {
+                setMessage("Invalid amount. Please enter an amount between 1 and 50,000.");
+                setLoading(false);
+                return;
+            }
+            const amountInPaise = amount * 100; 
 
             const intentRes = await axios.post(
-                "http://localhost:8080/api/payment/create-intent",
+                `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/payment/create-intent`,
                 { amount: amountInPaise },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
@@ -62,7 +66,7 @@ export default function CheckoutForm({ onPaymentSuccess }: CheckoutFormProps) {
 
             if (paymentResult.paymentIntent.status === "succeeded") {
                 await axios.post(
-                    "http://localhost:8080/api/payment/update-wallet",
+                    `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/payment/update-wallet`,
                     { 
                         paymentIntentId: paymentResult.paymentIntent.id,
                         amount: amountInPaise
@@ -71,9 +75,8 @@ export default function CheckoutForm({ onPaymentSuccess }: CheckoutFormProps) {
                 );
                 
                 setMessage("Success! Wallet funded.");
-                setAmount(50); // Reset the input field
+                setAmount(50); 
                 
-                // 2. Call the refresh function from the parent!
                 onPaymentSuccess(); 
             }
         } catch (error) {
@@ -97,7 +100,6 @@ export default function CheckoutForm({ onPaymentSuccess }: CheckoutFormProps) {
                 min="1"
             />
 
-            {/* 3. The Test Card Details Box */}
             <div className="bg-blue-50 p-3 rounded text-sm text-blue-800 border border-blue-200">
                 <p className="font-semibold mb-1">Use this Test Card:</p>
                 <p><strong>Number:</strong> 4000 0035 6000 0008</p>
