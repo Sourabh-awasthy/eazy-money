@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { StockCard, StockCardProps } from "./components/StockCard";
 import Navbar from "./components/NavBar";
-import TradeModal from "./components/TradeModal"; // Import your new modal
+import TradeModal from "./components/TradeModal";
 import { socket } from "./lib/socket";
 
 export default function Home() {
