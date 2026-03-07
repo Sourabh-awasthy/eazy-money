@@ -1,7 +1,7 @@
 # Eazy Trade 📈
 **A Full-Stack Real-Time Paper Trading Application**
 
-[![Live Demo](https://img.shields.io/badge/Live-Demo-brightgreen.svg)](https://eazy-money.vercel.app)
+[![Live Demo](https://img.shields.io/badge/Live-Demo-brightgreen.svg)](https://eazy-trade.vercel.app)
 [![GitHub Repository](https://img.shields.io/badge/GitHub-Repository-blue.svg)](https://github.com/Sourabh-awasthy/eazy-money)
 
 Eazy Trade is a simulated paper trading platform that allows users to experience the thrill of the cryptocurrency markets without financial risk. Built with a modern Next.js and Node.js architecture, the platform features real-time data streaming, virtual wallet management, and secure simulated payment gateways.
